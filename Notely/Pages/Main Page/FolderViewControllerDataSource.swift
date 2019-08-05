@@ -10,9 +10,14 @@ import UIKit
 import RealmSwift
 
 
-final class FolderViewControllerDataSource: NSObject {
+final class FolderViewControllerDataSource {
     
     private let tableView: UITableView
+    private let cellID: String
+    
+    private enum Section { case main }
+    private typealias FolderID = String
+    private var dataSource: UITableViewDiffableDataSource<Section, FolderID>!
     
     private var folderResults: Results<Folder>
     private var notificationToken: NotificationToken?
@@ -21,14 +26,14 @@ final class FolderViewControllerDataSource: NSObject {
         return self.folderResults[indexPath.row]
     }
 
-    init(tableView: UITableView, data: Results<Folder>) {
+    init(tableView: UITableView, cellID: String, data: Results<Folder>) {
         self.tableView = tableView
         self.folderResults = data
-        super.init()
+        self.cellID = cellID
         
         self.configDataSource()
         self.configNotification()
-        
+        self.reloadData(animated: false)
     }
 }
 
@@ -44,39 +49,39 @@ extension FolderViewControllerDataSource {
     private func notificationHandler(_ change: RealmCollectionChange<Results<Folder>>) {
         switch change {
         case .initial(_): break
+        case .update(_, deletions: _, insertions: _ , modifications: _): self.reloadData(animated: true)
         case .error(let error): print(error.localizedDescription)
-        case .update(_, deletions: let deletions, insertions: let insertions, modifications: let modifications):
-            let toDeleteIndexPaths = deletions.map { IndexPath(row: $0, section: 0) }
-            let toInsertIndexPaths = insertions.map { IndexPath(row: $0, section: 0) }
-            let toModifyIndexPaths = modifications.map { IndexPath(row: $0, section: 0) }
-
-            tableView.performBatchUpdates({
-                tableView.reloadRows(at: toModifyIndexPaths, with: .automatic)
-                tableView.deleteRows(at:toDeleteIndexPaths, with: .automatic)
-                tableView.insertRows(at: toInsertIndexPaths, with: .automatic)
-            }, completion: nil)
         }
     }
 }
 
 // MARK: - Table View Data Source
 
-extension FolderViewControllerDataSource: UITableViewDataSource {
+extension FolderViewControllerDataSource {
     
     private func configDataSource() {
-        self.tableView.dataSource = self
+        self.dataSource = UITableViewDiffableDataSource(tableView: self.tableView, cellProvider: cellProvider)
     }
     
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return self.folderResults.count
-    }
-    
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: FolderViewController.cellIdentifier, for: indexPath)
-        let folder = self.folder(at: indexPath)
+    private func cellProvider(tableView: UITableView, indexPath: IndexPath, folderID: FolderID) -> UITableViewCell? {
+        let cell = tableView.dequeueReusableCell(withIdentifier: cellID, for: indexPath)
         
-        cell.textLabel?.text = folder.name
+        guard let fol = folderResults.first(where: { $0.id == folderID }) else { return nil }
+        
+        cell.textLabel?.text = fol.name
         
         return cell
+    }
+    
+    private func reloadData(animated: Bool) {
+        
+        let folderIDs: [FolderID] = folderResults.map { $0.id }
+
+        let snapshot = NSDiffableDataSourceSnapshot<Section, FolderID>()
+        
+        snapshot.appendSections([.main])
+        snapshot.appendItems(folderIDs)
+        
+        self.dataSource.apply(snapshot)
     }
 }

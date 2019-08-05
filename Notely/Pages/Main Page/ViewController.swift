@@ -22,6 +22,7 @@ final class FolderViewController: UITableViewController, Storyboarded {
         
         self.addBarButtons()
         self.dataSource = FolderViewControllerDataSource(tableView: self.tableView,
+                                                         cellID: FolderViewController.cellIdentifier,
                                                          data: persistentManager.all())
     }
     
