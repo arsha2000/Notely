@@ -6,9 +6,9 @@
 //  Copyright © 2019 Olly Taylor. All rights reserved.
 //
 
-import Foundation
 import UIKit
 import SwiftUI
+import RealmSwift
 
 final class MainCoordinator: Coordinator {
     
@@ -26,8 +26,20 @@ final class MainCoordinator: Coordinator {
     }
     
     func open(_ folder: Folder) {
-        let noteList = NotesList()
-        let vc = UIHostingController(rootView: noteList)
+        let vc = NoteViewController.instantiate()
+        vc.folder = folder
+        vc.coordinator = self
+        
+        vc.hidesBottomBarWhenPushed = true
+        
+        navigationController.pushViewController(vc, animated: true)
+    }
+    
+    func open(_ note: Note) {
+        let view = NoteEditorView(model: .init(note: note))
+        let vc = UIHostingController(rootView: view)
+        
+        vc.hidesBottomBarWhenPushed = true
         
         navigationController.pushViewController(vc, animated: true)
     }

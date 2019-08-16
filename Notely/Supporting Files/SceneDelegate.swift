@@ -7,8 +7,9 @@
 //
 
 import UIKit
+import SwiftUI
 
-class SceneDelegate: UIResponder, UIWindowSceneDelegate {
+final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     private var coordinator: MainCoordinator?
     var window: UIWindow?
@@ -20,13 +21,49 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         // This delegate does not imply the connecting scene or session are new (see `application:configurationForConnectingSceneSession` instead).
         guard let scene = (scene as? UIWindowScene) else { return }
         
-        let navController = UINavigationController.instantiate()
+        
+        window = UIWindow(windowScene: scene)
+        window?.rootViewController = tabBarController()
+        window?.makeKeyAndVisible()
+    }
+    
+    private func tabBarController() -> UITabBarController {
+        
+        let vc1 = foldersViewController()
+        let vc2 = settingsViewController()
+        
+        let tabBarController = UITabBarController()
+        tabBarController.viewControllers = [vc1, vc2]
+        tabBarController.selectedIndex = 0
+        
+        return tabBarController
+    }
+    
+    private func foldersViewController() -> UINavigationController {
+        let barItem = UITabBarItem()
+        barItem.title = NSLocalizedString("Folders", comment: "")
+        barItem.image = UIImage(systemName: "folder")
+        
+        let navController = UINavigationController()
+        navController.tabBarItem = barItem
+        navController.navigationBar.prefersLargeTitles = true
+        
         coordinator = MainCoordinator(navigationController: navController)
         coordinator?.start()
         
-        window = UIWindow(windowScene: scene)
-        window?.rootViewController = navController
-        window?.makeKeyAndVisible()
+        return navController
+    }
+    
+    private func settingsViewController() -> UIHostingController<SettingsView> {
+        let barItem = UITabBarItem()
+        barItem.title = NSLocalizedString("Settings", comment: "")
+        barItem.image = UIImage(systemName: "gear")
+        
+        let view = SettingsView()
+        let vc = UIHostingController(rootView: view)
+        vc.tabBarItem = barItem
+                
+        return vc
     }
 
     func sceneDidDisconnect(_ scene: UIScene) {

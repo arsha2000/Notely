@@ -18,7 +18,9 @@ final class PersistentManager<ObjectType: Object> {
             self.realm = realm
         } else {
             var config = Realm.Configuration()
+            #if DEBUG
             config.deleteRealmIfMigrationNeeded = true
+            #endif
             let _realm = try! Realm(configuration: config)
             self.realm = _realm
         }
@@ -41,6 +43,12 @@ final class PersistentManager<ObjectType: Object> {
     func delete(_ object: ObjectType) {
         self.safeWrite {
             self.realm.delete(object)
+        }
+    }
+    
+    func modify(_ object: ObjectType, modifierBlock: @escaping (ObjectType) -> ()) {
+        self.safeWrite {
+            modifierBlock(object)
         }
     }
     

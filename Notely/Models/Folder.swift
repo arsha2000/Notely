@@ -10,10 +10,11 @@ import RealmSwift
 import Foundation
 
 @objcMembers
-final class Folder: Object {
+final class Folder: Object, Identifiable {
     dynamic var id = UUID().uuidString
     dynamic var name: String = ""
-    
+    dynamic var timestamp = Date()
+    let notes = List<Note>()
     
     convenience init(name: String) {
         self.init()
@@ -24,3 +25,13 @@ final class Folder: Object {
         return "id"
     }
 }
+
+
+#if DEBUG
+var sampleFolder: Folder = {
+    let folder = Folder(name: "Sample Folder")
+    let sampleNote = Note(body: "Sample Sample", parent: folder)
+    folder.notes.append(sampleNote)
+    return folder
+}()
+#endif
