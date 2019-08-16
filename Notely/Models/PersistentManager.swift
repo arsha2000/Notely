@@ -62,3 +62,14 @@ final class PersistentManager<ObjectType: Object> {
         }
     }
 }
+
+extension PersistentManager where ObjectType: Folder {
+    func delete(_ object: ObjectType) {
+        self.safeWrite {
+            let predicate = NSPredicate(format: "parent.id == %@", object.id)
+            let childs = self.realm.objects(Note.self).filter(predicate)
+            self.realm.delete(childs)
+            self.realm.delete(object)
+        }
+    }
+}
