@@ -59,6 +59,7 @@ extension FolderViewController {
                                               title: nil) { (_, _, completed) in
                                                 let folder = self.dataSource.object(at: indexPath)
                                                 self.persistentManager.delete(folder)
+                                                completed(true)
         }
         
         deleteAction.image = UIImage(systemName: "trash")
