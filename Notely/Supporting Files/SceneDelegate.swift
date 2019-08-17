@@ -59,7 +59,7 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         barItem.title = NSLocalizedString("Settings", comment: "")
         barItem.image = UIImage(systemName: "gear")
         
-        let view = SettingsView()
+        let view = SettingsView(model: .init())
         let vc = UIHostingController(rootView: view)
         vc.tabBarItem = barItem
                 
