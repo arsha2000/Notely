@@ -7,30 +7,33 @@
 //
 
 import SwiftUI
+import Combine
 
 struct SettingsView: View {
     
-    @State private var folderSortingIndex = 0
-    @State private var noteSortingIndex = 0
-    
+    @ObservedObject var model: SettingsViewModel
+        
     var body: some View {
         NavigationView {
             Form {
                 Section(header: Text("Sorting").font(.subheadline)) {
                     
-                    Picker("Sort Folders By", selection: $folderSortingIndex) {
-                        Text(" ")
+                    Picker("Sort Folders By", selection: $model.foldersSorting) {
+                        ForEach(Preference.SortingMethod.allCases, id: \.self) { method in
+                            Text(method.string)
+                        }
                     }
                     
-                    Picker("Sort Notes By", selection: $noteSortingIndex) {
-                        Text("Hi")
-                        
+                    Picker("Sort Notes By", selection: $model.notesSorting) {
+                        ForEach(Preference.SortingMethod.allCases, id: \.self) { method in
+                            Text(method.string)
+                        }
                     }
                     
                     
                 }
                 
-                Section {
+                Section(header: Text("About").font(.subheadline)) {
                     HStack {
                         Text("Version")
                             .font(.body)
@@ -48,10 +51,33 @@ struct SettingsView: View {
     }
 }
 
+final class SettingsViewModel: ObservableObject {
+    
+    var objectWillChange = PassthroughSubject<Void, Never>()
+    
+    var foldersSorting: Preference.SortingMethod {
+        get { preference.foldersSortingMethod }
+        set {
+            objectWillChange.send()
+            preference.foldersSortingMethod = newValue
+        }
+    }
+    var notesSorting: Preference.SortingMethod {
+        get { preference.notesSortingMethod }
+        set {
+            objectWillChange.send()
+            preference.notesSortingMethod = newValue
+        }
+    }
+    
+    private var preference = Preference.shared
+    
+}
+
 #if DEBUG
 struct SettingsView_Previews: PreviewProvider {
     static var previews: some View {
-        SettingsView()
+        SettingsView(model: .init())
     }
 }
 #endif
