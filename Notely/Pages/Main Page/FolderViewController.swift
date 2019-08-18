@@ -7,6 +7,8 @@
 //
 
 import UIKit
+import RealmSwift
+import Combine
 
 
 final class FolderViewController: UITableViewController, Storyboarded {
@@ -16,16 +18,33 @@ final class FolderViewController: UITableViewController, Storyboarded {
     
     private var persistentManager = PersistentManager(of: Folder.self)
     private var dataSource: ObjectDataSource<Folder>!
+    private var preferenceCancellable: Cancellable?
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
         self.addBarButtons()
         
+        configDataSource()
+        
+        self.preferenceCancellable = NotificationCenter.default.publisher(for: .preferenceDidChange)
+            .sink { _ in self.configDataSource() }
+    }
+    
+    private func configDataSource() {
         self.dataSource = ObjectDataSource(tableView: self.tableView,
-                                                         cellID: FolderViewController.cellIdentifier,
-                                                         data: persistentManager.all().sorted(byKeyPath: "timestamp", ascending: false),
-                                                         cellConfigBlock: cellProvider(cell:folder:)) 
+        cellID: FolderViewController.cellIdentifier,
+        data: sortedResult(),
+        cellConfigBlock: cellProvider(cell:folder:))
+    }
+    
+    private func sortedResult() -> Results<Folder> {
+        switch Preference.shared.foldersSortingMethod {
+        case .newestToOldest, .lastUpdated:
+            return persistentManager.all().sorted(byKeyPath: Folder.Key.timestamp, ascending: false)
+        case .oldestToNewest:
+            return persistentManager.all().sorted(byKeyPath: Folder.Key.timestamp, ascending: true)
+        }
     }
     
     private func cellProvider(cell: UITableViewCell, folder: Folder) {

@@ -26,6 +26,14 @@ final class Folder: Object, Identifiable {
     }
 }
 
+extension Folder {
+    enum Key {
+        static let id = "id"
+        static let name = "name"
+        static let timestamp = "timestamp"
+        static let notes = "notes"
+    }
+}
 
 #if DEBUG
 var sampleFolder: Folder = {
