@@ -7,6 +7,8 @@
 //
 
 import UIKit
+import RealmSwift
+import Combine
 
 
 final class FolderViewController: UITableViewController, Storyboarded {
@@ -16,24 +18,31 @@ final class FolderViewController: UITableViewController, Storyboarded {
     
     private var persistentManager = PersistentManager(of: Folder.self)
     private var dataSource: ObjectDataSource<Folder>!
+    private var preferenceCancellable: Cancellable?
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
         self.addBarButtons()
         
-        self.dataSource = ObjectDataSource(tableView: self.tableView,
-                                                         cellID: FolderViewController.cellIdentifier,
-                                                         data: persistentManager.all().sorted(byKeyPath: "timestamp", ascending: false),
-                                                         cellConfigBlock: cellProvider(cell:folder:)) 
+        configDataSource()
+        
+        // Sort Folders accordingly when preference changes
+        self.preferenceCancellable = NotificationCenter.default
+            .publisher(for: .preferenceDidChange)
+            .sink { _ in self.configDataSource() }
+        
     }
-    
-    private func cellProvider(cell: UITableViewCell, folder: Folder) {
-        cell.textLabel?.text = folder.name
-    }
-    
+}
+
+// MARK: - UI Methods
+
+extension FolderViewController {
     private func addBarButtons() {
-        self.navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "plus.circle.fill"), style: .plain, target: self, action: #selector(addFolder(_:)))
+        self.navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "plus.circle.fill"),
+                                                                 style: .plain,
+                                                                 target: self,
+                                                                 action: #selector(addFolder(_:)))
         self.navigationItem.leftBarButtonItem = editButtonItem
     }
     
@@ -46,6 +55,31 @@ final class FolderViewController: UITableViewController, Storyboarded {
             let folder = Folder(name: folderName)
             self.persistentManager.add(folder)
         }
+    }
+}
+
+// MARK: - Data Source
+
+extension FolderViewController {
+    
+    private func configDataSource() {
+        self.dataSource = ObjectDataSource(tableView: self.tableView,
+        cellID: FolderViewController.cellIdentifier,
+        data: sortedResult(),
+        cellConfigBlock: cellProvider(cell:folder:))
+    }
+    
+    private func sortedResult() -> Results<Folder> {
+        switch Preference.shared.foldersSortingMethod {
+        case .newestToOldest, .lastUpdated:
+            return persistentManager.all().sorted(byKeyPath: Folder.Key.timestamp, ascending: false)
+        case .oldestToNewest:
+            return persistentManager.all().sorted(byKeyPath: Folder.Key.timestamp, ascending: true)
+        }
+    }
+    
+    private func cellProvider(cell: UITableViewCell, folder: Folder) {
+        cell.textLabel?.text = folder.name
     }
 }
 

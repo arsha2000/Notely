@@ -30,7 +30,6 @@ final class ObjectDataSource<ObjectType: Object & Identifiable> {
         self.cellID = cellID
         self.cellConfigBlock = cellConfigBlock
         
-        
         configNotification()
         configDataSource()
         reloadData(animated: false)
